@@ -1,10 +1,9 @@
-import { Response, NextFunction } from "express";
+import { Response, NextFunction, Request } from "express";
 import IArgumentValidation, {
   EArgumentType,
   EParameterType,
 } from "../interfaces/ArgumentValidation";
 import validator from "validator";
-import ICustomRequest from "../interfaces/CustomRequest";
 import IError from "../interfaces/Error";
 import { UploadedFile } from "express-fileupload";
 
@@ -30,10 +29,10 @@ const isArgumentValid = <NewArgType>(
     argumentType,
     stringOption,
     numberOption,
-    isMiddleware,
+    isMiddleware = true,
   } = argumentValidation;
 
-  const isString = (req: ICustomRequest, res: Response, next: NextFunction) => {
+  const isString = (req: Request, res: Response, next: NextFunction) => {
     try {
       const argument = req[parameterType][argumentName];
 
@@ -122,14 +121,14 @@ const isArgumentValid = <NewArgType>(
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
       isMiddleware
-        ? res.status((error as IError).status || 500).json({
-            message: (error as IError).message || "Internal server error",
+        ? res.status((error as IError)?.status || 500).json({
+            message: (error as IError)?.message || "Internal server error",
           })
-        : console.log((error as IError).message);
+        : console.log((error as IError)?.message);
     }
   };
 
-  const isNumber = (req: ICustomRequest, res: Response, next: NextFunction) => {
+  const isNumber = (req: Request, res: Response, next: NextFunction) => {
     try {
       const argument = Number(req[parameterType][argumentName]);
 
@@ -188,18 +187,14 @@ const isArgumentValid = <NewArgType>(
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
       isMiddleware
-        ? res.status((error as IError).status || 500).json({
-            message: (error as IError).message || "Internal server error",
+        ? res.status((error as IError)?.status || 500).json({
+            message: (error as IError)?.message || "Internal server error",
           })
-        : console.log((error as IError).message);
+        : console.log((error as IError)?.message);
     }
   };
 
-  const isPicture = (
-    req: ICustomRequest,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const isPicture = (req: Request, res: Response, next: NextFunction) => {
     try {
       if (parameterType === EParameterType.FILES && req[parameterType]) {
         if (!Array.isArray(req[parameterType]![argumentName])) {
@@ -239,18 +234,14 @@ const isArgumentValid = <NewArgType>(
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
       isMiddleware
-        ? res.status((error as IError).status || 500).json({
-            message: (error as IError).message || "Internal server error",
+        ? res.status((error as IError)?.status || 500).json({
+            message: (error as IError)?.message || "Internal server error",
           })
-        : console.log((error as IError).message);
+        : console.log((error as IError)?.message);
     }
   };
 
-  const isBoolean = (
-    req: ICustomRequest,
-    res: Response,
-    next: NextFunction
-  ) => {
+  const isBoolean = (req: Request, res: Response, next: NextFunction) => {
     try {
       let argument = req[parameterType][argumentName];
       const allowedArgumentList = [
@@ -282,10 +273,10 @@ const isArgumentValid = <NewArgType>(
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
       isMiddleware
-        ? res.status((error as IError).status || 500).json({
-            message: (error as IError).message || "Internal server error",
+        ? res.status((error as IError)?.status || 500).json({
+            message: (error as IError)?.message || "Internal server error",
           })
-        : console.log((error as IError).message);
+        : console.log((error as IError)?.message);
     }
   };
 
@@ -301,4 +292,4 @@ const isArgumentValid = <NewArgType>(
   }
 };
 
-module.exports = { isArgumentValid };
+export default isArgumentValid;
