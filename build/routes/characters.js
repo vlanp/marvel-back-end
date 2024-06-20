@@ -94,15 +94,13 @@ router.get("/characters", function (req, res, next) { return __awaiter(void 0, v
             case 1:
                 response = _b.sent();
                 if (!(0, Characters_1.isCharacters)(response.data)) {
-                    throw { status: 500, message: "No data received from marvel's API" };
+                    throw new Error("Unexpected response from marvel's API");
                 }
                 res.status(200).json(response.data);
                 return [3 /*break*/, 3];
             case 2:
                 error_1 = _b.sent();
-                res
-                    .status((error_1 === null || error_1 === void 0 ? void 0 : error_1.status) || 500)
-                    .json({ message: (error_1 === null || error_1 === void 0 ? void 0 : error_1.message) || "Internal server error" });
+                res.status(500).json(error_1);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }
@@ -133,15 +131,13 @@ router.get("/character/:characterid", (0, argumentValidation_1.default)({
             case 1:
                 response = _a.sent();
                 if (!(0, AboutACharacter_1.isAboutACharacter)(response.data)) {
-                    throw { status: 500, message: "No data received from marvel's API" };
+                    throw new Error("Unexpected response from marvel's API");
                 }
                 res.status(200).json(response.data);
                 return [3 /*break*/, 3];
             case 2:
                 error_2 = _a.sent();
-                res.status((error_2 === null || error_2 === void 0 ? void 0 : error_2.status) || 500).json({
-                    message: (error_2 === null || error_2 === void 0 ? void 0 : error_2.message) || "Internal server error",
-                });
+                res.status(500).json(error_2);
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }

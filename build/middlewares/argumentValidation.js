@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var ArgumentValidation_1 = require("../interfaces/ArgumentValidation");
 var validator_1 = __importDefault(require("validator"));
+var Error_1 = __importDefault(require("../classes/Error"));
 /**
  * Return **next()** or **undefined** when use as a **middleware** and return **true** or **undefined** otherwise.
  *
@@ -24,8 +25,11 @@ var isArgumentValid = function (argumentValidation) {
         try {
             var argument = req[parameterType][argumentName];
             if (typeof argument !== "string") {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect " +
                         argumentName +
                         ". Please enter a valid " +
@@ -33,7 +37,7 @@ var isArgumentValid = function (argumentValidation) {
                         ". (format: " +
                         argumentType +
                         ")",
-                };
+                });
             }
             if (((stringOption === null || stringOption === void 0 ? void 0 : stringOption.argumentMinLength)
                 ? argument.length < stringOption.argumentMinLength
@@ -57,38 +61,50 @@ var isArgumentValid = function (argumentValidation) {
                             stringOption.argumentMinLength +
                             " char long."
                         : "";
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect " + argumentName + ". " + part1 + part2,
-                };
+                });
             }
             if ((stringOption === null || stringOption === void 0 ? void 0 : stringOption.mustBeStrongPassword)
                 ? !validator_1.default.isStrongPassword(argument)
                 : false) {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect password. Your password must be at least 8 characters long with at least 1 lowercase, 1 uppercase, 1 number and 1 symbol",
-                };
+                });
             }
             if ((stringOption === null || stringOption === void 0 ? void 0 : stringOption.mustBeEmail) ? !validator_1.default.isEmail(argument) : false) {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect email. Please enter a valid email.",
-                };
+                });
             }
             var keyList = (stringOption === null || stringOption === void 0 ? void 0 : stringOption.argumentTransformObj)
                 ? Object.keys(stringOption.argumentTransformObj)
                 : [];
             if (keyList.length !== 0) {
                 if (!keyList.includes(argument)) {
-                    throw {
+                    throw new Error_1.default({
                         status: 406,
+                        argumentName: argumentName,
+                        argumentType: argumentType,
+                        parameterType: parameterType,
                         message: "Incorrect " +
                             argumentName +
                             ". Must be " +
                             keyList.join(" or ") +
                             ".",
-                    };
+                    });
                 }
                 var newArg = stringOption.argumentTransformObj[argument];
                 req[parameterType][argumentName] = newArg;
@@ -96,19 +112,25 @@ var isArgumentValid = function (argumentValidation) {
             return isMiddleware ? next() : true;
         }
         catch (error) {
-            isMiddleware
-                ? res.status((error === null || error === void 0 ? void 0 : error.status) || 500).json({
-                    message: (error === null || error === void 0 ? void 0 : error.message) || "Internal server error",
-                })
-                : console.log(error === null || error === void 0 ? void 0 : error.message);
+            if (error instanceof Error_1.default) {
+                isMiddleware
+                    ? res.status(error.status).json(error)
+                    : console.log(error.message);
+            }
+            else {
+                isMiddleware ? res.status(500).json(error) : console.log(error);
+            }
         }
     };
     var isNumber = function (req, res, next) {
         try {
             var argument = Number(req[parameterType][argumentName]);
             if (typeof argument !== "number" || Number.isNaN(argument)) {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect " +
                         argumentName +
                         ". Please enter a valid " +
@@ -116,13 +138,16 @@ var isArgumentValid = function (argumentValidation) {
                         ". (format: " +
                         argumentType +
                         ")",
-                };
+                });
             }
             if ((numberOption === null || numberOption === void 0 ? void 0 : numberOption.mustBeInteger) ? !Number.isInteger(argument) : false) {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect " + argumentName + ". Must be an integer.",
-                };
+                });
             }
             if (((numberOption === null || numberOption === void 0 ? void 0 : numberOption.argumentMinValue)
                 ? argument < numberOption.argumentMinValue
@@ -145,20 +170,26 @@ var isArgumentValid = function (argumentValidation) {
                             stringOption.argumentMinLength +
                             "."
                         : "";
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "Incorrect " + argumentName + ". " + part1 + part2,
-                };
+                });
             }
             req[parameterType][argumentName] = argument;
             return isMiddleware ? next() : true;
         }
         catch (error) {
-            isMiddleware
-                ? res.status((error === null || error === void 0 ? void 0 : error.status) || 500).json({
-                    message: (error === null || error === void 0 ? void 0 : error.message) || "Internal server error",
-                })
-                : console.log(error === null || error === void 0 ? void 0 : error.message);
+            if (error instanceof Error_1.default) {
+                isMiddleware
+                    ? res.status(error.status).json(error)
+                    : console.log(error.message);
+            }
+            else {
+                isMiddleware ? res.status(500).json(error) : console.log(error);
+            }
         }
     };
     var isPicture = function (req, res, next) {
@@ -167,10 +198,13 @@ var isArgumentValid = function (argumentValidation) {
                 if (!Array.isArray(req[parameterType][argumentName])) {
                     var picture = req[parameterType][argumentName];
                     if (!picture || !picture.mimetype || !picture.data) {
-                        throw {
+                        throw new Error_1.default({
                             status: 400,
+                            argumentName: argumentName,
+                            argumentType: argumentType,
+                            parameterType: parameterType,
                             message: "No picture found",
-                        };
+                        });
                     }
                 }
                 else {
@@ -183,27 +217,36 @@ var isArgumentValid = function (argumentValidation) {
                         }
                     }
                     if (pictureList.length === 0) {
-                        throw {
+                        throw new Error_1.default({
                             status: 400,
+                            argumentName: argumentName,
+                            argumentType: argumentType,
+                            parameterType: parameterType,
                             message: "No picture found",
-                        };
+                        });
                     }
                 }
             }
             else {
-                throw {
+                throw new Error_1.default({
                     status: 400,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: "No picture found",
-                };
+                });
             }
             return isMiddleware ? next() : true;
         }
         catch (error) {
-            isMiddleware
-                ? res.status((error === null || error === void 0 ? void 0 : error.status) || 500).json({
-                    message: (error === null || error === void 0 ? void 0 : error.message) || "Internal server error",
-                })
-                : console.log(error === null || error === void 0 ? void 0 : error.message);
+            if (error instanceof Error_1.default) {
+                isMiddleware
+                    ? res.status(error.status).json(error)
+                    : console.log(error.message);
+            }
+            else {
+                isMiddleware ? res.status(500).json(error) : console.log(error);
+            }
         }
     };
     var isBoolean = function (req, res, next) {
@@ -220,10 +263,13 @@ var isArgumentValid = function (argumentValidation) {
                 "true",
             ];
             if (!allowedArgumentList.includes(argument)) {
-                throw {
+                throw new Error_1.default({
                     status: 406,
+                    argumentName: argumentName,
+                    argumentType: argumentType,
+                    parameterType: parameterType,
                     message: argumentName + " is not a boolean.",
-                };
+                });
             }
             if ((allowedArgumentList.indexOf(argument) + 1) % 2 === 0) {
                 argument = true;
@@ -235,11 +281,14 @@ var isArgumentValid = function (argumentValidation) {
             return isMiddleware ? next() : true;
         }
         catch (error) {
-            isMiddleware
-                ? res.status((error === null || error === void 0 ? void 0 : error.status) || 500).json({
-                    message: (error === null || error === void 0 ? void 0 : error.message) || "Internal server error",
-                })
-                : console.log(error === null || error === void 0 ? void 0 : error.message);
+            if (error instanceof Error_1.default) {
+                isMiddleware
+                    ? res.status(error.status).json(error)
+                    : console.log(error.message);
+            }
+            else {
+                isMiddleware ? res.status(500).json(error) : console.log(error);
+            }
         }
     };
     switch (argumentType) {

@@ -4,7 +4,7 @@ import {
   EArgumentType,
   EParameterType,
 } from "../interfaces/ArgumentValidation";
-import IError from "../interfaces/Error";
+import IError from "../classes/Error";
 import axios from "axios";
 import { isComics } from "../interfaces/Comics";
 import { isComicsWithCharacter } from "../interfaces/ComicsWithCharacter";
@@ -61,14 +61,12 @@ router.get("/comics", async (req, res, next) => {
     const response = await axios.get(url);
 
     if (!isComics(response.data)) {
-      throw { status: 500, message: "No data received from marvel's API" };
+      throw new Error("Unexpected response from marvel's API");
     }
 
     res.status(200).json(response.data);
   } catch (error: unknown) {
-    res
-      .status((error as IError)?.status || 500)
-      .json({ message: (error as IError)?.message || "Internal server error" });
+    res.status(500).json(error);
   }
 });
 
@@ -98,14 +96,12 @@ router.get(
       const response = await axios.get(url);
 
       if (!isComicsWithCharacter(response.data)) {
-        throw { status: 500, message: "No data received from marvel's API" };
+        throw new Error("Unexpected response from marvel's API");
       }
 
       res.status(200).json(response.data);
     } catch (error: unknown) {
-      res.status((error as IError)?.status || 500).json({
-        message: (error as IError)?.message || "Internal server error",
-      });
+      res.status(500).json(error);
     }
   }
 );
@@ -136,14 +132,12 @@ router.get(
       const response = await axios.get(url);
 
       if (!isAboutAComic(response.data)) {
-        throw { status: 500, message: "No data received from marvel's API" };
+        throw new Error("Unexpected response from marvel's API");
       }
 
       res.status(200).json(response.data);
     } catch (error: unknown) {
-      res.status((error as IError)?.status || 500).json({
-        message: (error as IError)?.message || "Internal server error",
-      });
+      res.status(500).json(error);
     }
   }
 );

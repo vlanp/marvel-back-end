@@ -5,7 +5,6 @@ import {
   EParameterType,
 } from "../interfaces/ArgumentValidation";
 import axios from "axios";
-import IError from "../interfaces/Error";
 import { isCharacters } from "../interfaces/Characters";
 import { isAboutACharacter } from "../interfaces/AboutACharacter";
 
@@ -60,14 +59,12 @@ router.get("/characters", async (req, res, next) => {
     const response = await axios.get(url);
 
     if (!isCharacters(response.data)) {
-      throw { status: 500, message: "No data received from marvel's API" };
+      throw new Error("Unexpected response from marvel's API");
     }
 
     res.status(200).json(response.data);
   } catch (error: unknown) {
-    res
-      .status((error as IError)?.status || 500)
-      .json({ message: (error as IError)?.message || "Internal server error" });
+    res.status(500).json(error);
   }
 });
 
@@ -97,14 +94,12 @@ router.get(
       const response = await axios.get(url);
 
       if (!isAboutACharacter(response.data)) {
-        throw { status: 500, message: "No data received from marvel's API" };
+        throw new Error("Unexpected response from marvel's API");
       }
 
       res.status(200).json(response.data);
     } catch (error: unknown) {
-      res.status((error as IError)?.status || 500).json({
-        message: (error as IError)?.message || "Internal server error",
-      });
+      res.status(500).json(error);
     }
   }
 );

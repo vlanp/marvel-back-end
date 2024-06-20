@@ -4,8 +4,9 @@ import IArgumentValidation, {
   EParameterType,
 } from "../interfaces/ArgumentValidation";
 import validator from "validator";
-import IError from "../interfaces/Error";
+import IError from "../classes/Error";
 import { UploadedFile } from "express-fileupload";
+import CArgumentValidationError from "../classes/Error";
 
 /**
  * Return **next()** or **undefined** when use as a **middleware** and return **true** or **undefined** otherwise.
@@ -37,8 +38,11 @@ const isArgumentValid = <NewArgType>(
       const argument = req[parameterType][argumentName];
 
       if (typeof argument !== "string") {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message:
             "Incorrect " +
             argumentName +
@@ -47,7 +51,7 @@ const isArgumentValid = <NewArgType>(
             ". (format: " +
             argumentType +
             ")",
-        };
+        });
       }
 
       if (
@@ -74,10 +78,14 @@ const isArgumentValid = <NewArgType>(
             stringOption.argumentMinLength +
             " char long."
           : "";
-        throw {
+
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: "Incorrect " + argumentName + ". " + part1 + part2,
-        };
+        });
       }
 
       if (
@@ -85,18 +93,24 @@ const isArgumentValid = <NewArgType>(
           ? !validator.isStrongPassword(argument)
           : false
       ) {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message:
             "Incorrect password. Your password must be at least 8 characters long with at least 1 lowercase, 1 uppercase, 1 number and 1 symbol",
-        };
+        });
       }
 
       if (stringOption?.mustBeEmail ? !validator.isEmail(argument) : false) {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: "Incorrect email. Please enter a valid email.",
-        };
+        });
       }
 
       const keyList = stringOption?.argumentTransformObj
@@ -104,15 +118,18 @@ const isArgumentValid = <NewArgType>(
         : [];
       if (keyList.length !== 0) {
         if (!keyList.includes(argument)) {
-          throw {
+          throw new CArgumentValidationError({
             status: 406,
+            argumentName: argumentName,
+            argumentType: argumentType,
+            parameterType: parameterType,
             message:
               "Incorrect " +
               argumentName +
               ". Must be " +
               keyList.join(" or ") +
               ".",
-          };
+          });
         }
         const newArg = stringOption!.argumentTransformObj![argument];
         req[parameterType][argumentName] = newArg;
@@ -120,11 +137,13 @@ const isArgumentValid = <NewArgType>(
 
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
-      isMiddleware
-        ? res.status((error as IError)?.status || 500).json({
-            message: (error as IError)?.message || "Internal server error",
-          })
-        : console.log((error as IError)?.message);
+      if (error instanceof CArgumentValidationError) {
+        isMiddleware
+          ? res.status(error.status).json(error)
+          : console.log(error.message);
+      } else {
+        isMiddleware ? res.status(500).json(error) : console.log(error);
+      }
     }
   };
 
@@ -133,8 +152,11 @@ const isArgumentValid = <NewArgType>(
       const argument = Number(req[parameterType][argumentName]);
 
       if (typeof argument !== "number" || Number.isNaN(argument)) {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message:
             "Incorrect " +
             argumentName +
@@ -143,14 +165,17 @@ const isArgumentValid = <NewArgType>(
             ". (format: " +
             argumentType +
             ")",
-        };
+        });
       }
 
       if (numberOption?.mustBeInteger ? !Number.isInteger(argument) : false) {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: "Incorrect " + argumentName + ". Must be an integer.",
-        };
+        });
       }
 
       if (
@@ -176,21 +201,26 @@ const isArgumentValid = <NewArgType>(
             stringOption.argumentMinLength +
             "."
           : "";
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: "Incorrect " + argumentName + ". " + part1 + part2,
-        };
+        });
       }
 
       req[parameterType][argumentName] = argument;
 
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
-      isMiddleware
-        ? res.status((error as IError)?.status || 500).json({
-            message: (error as IError)?.message || "Internal server error",
-          })
-        : console.log((error as IError)?.message);
+      if (error instanceof CArgumentValidationError) {
+        isMiddleware
+          ? res.status(error.status).json(error)
+          : console.log(error.message);
+      } else {
+        isMiddleware ? res.status(500).json(error) : console.log(error);
+      }
     }
   };
 
@@ -200,10 +230,13 @@ const isArgumentValid = <NewArgType>(
         if (!Array.isArray(req[parameterType]![argumentName])) {
           const picture = req[parameterType]![argumentName] as UploadedFile;
           if (!picture || !picture.mimetype || !picture.data) {
-            throw {
+            throw new CArgumentValidationError({
               status: 400,
+              argumentName: argumentName,
+              argumentType: argumentType,
+              parameterType: parameterType,
               message: "No picture found",
-            };
+            });
           }
         } else {
           const pictureList = req[parameterType]![
@@ -219,25 +252,33 @@ const isArgumentValid = <NewArgType>(
           }
 
           if (pictureList.length === 0) {
-            throw {
+            throw new CArgumentValidationError({
               status: 400,
+              argumentName: argumentName,
+              argumentType: argumentType,
+              parameterType: parameterType,
               message: "No picture found",
-            };
+            });
           }
         }
       } else {
-        throw {
+        throw new CArgumentValidationError({
           status: 400,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: "No picture found",
-        };
+        });
       }
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
-      isMiddleware
-        ? res.status((error as IError)?.status || 500).json({
-            message: (error as IError)?.message || "Internal server error",
-          })
-        : console.log((error as IError)?.message);
+      if (error instanceof CArgumentValidationError) {
+        isMiddleware
+          ? res.status(error.status).json(error)
+          : console.log(error.message);
+      } else {
+        isMiddleware ? res.status(500).json(error) : console.log(error);
+      }
     }
   };
 
@@ -256,10 +297,13 @@ const isArgumentValid = <NewArgType>(
       ];
 
       if (!allowedArgumentList.includes(argument)) {
-        throw {
+        throw new CArgumentValidationError({
           status: 406,
+          argumentName: argumentName,
+          argumentType: argumentType,
+          parameterType: parameterType,
           message: argumentName + " is not a boolean.",
-        };
+        });
       }
 
       if ((allowedArgumentList.indexOf(argument) + 1) % 2 === 0) {
@@ -272,11 +316,13 @@ const isArgumentValid = <NewArgType>(
 
       return isMiddleware ? next() : true;
     } catch (error: unknown) {
-      isMiddleware
-        ? res.status((error as IError)?.status || 500).json({
-            message: (error as IError)?.message || "Internal server error",
-          })
-        : console.log((error as IError)?.message);
+      if (error instanceof CArgumentValidationError) {
+        isMiddleware
+          ? res.status(error.status).json(error)
+          : console.log(error.message);
+      } else {
+        isMiddleware ? res.status(500).json(error) : console.log(error);
+      }
     }
   };
 
