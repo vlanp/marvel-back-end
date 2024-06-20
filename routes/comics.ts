@@ -4,7 +4,6 @@ import {
   EArgumentType,
   EParameterType,
 } from "../interfaces/ArgumentValidation";
-import IError from "../classes/Error";
 import axios from "axios";
 import { isComics } from "../interfaces/Comics";
 import { isComicsWithCharacter } from "../interfaces/ComicsWithCharacter";

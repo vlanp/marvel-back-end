@@ -4,7 +4,6 @@ import IArgumentValidation, {
   EParameterType,
 } from "../interfaces/ArgumentValidation";
 import validator from "validator";
-import IError from "../classes/Error";
 import { UploadedFile } from "express-fileupload";
 import CArgumentValidationError from "../classes/Error";
 

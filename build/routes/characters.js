@@ -143,4 +143,104 @@ router.get("/character/:characterid", (0, argumentValidation_1.default)({
         }
     });
 }); });
+router.get("/characters/:comicid", (0, argumentValidation_1.default)({
+    argumentName: "comicid",
+    argumentType: ArgumentValidation_1.EArgumentType.STRING,
+    parameterType: ArgumentValidation_1.EParameterType.PARAMS,
+    stringOption: {
+        argumentMinLength: 1,
+    },
+}), function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var endpoint, _limit, url, response, count, nbRequest, arrayOfPromises, i, skip_1, newUrl, promiseResponse, responseList, characterList, isNameValidFunction, isNameValid, isLimitValidFunction, isLimitValid, isSkipValidFunction, isSkipValid, comicid_1, name, limit_1, skip_2, regex_1, filteredCharacterList, _count, characters, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                endpoint = "/characters";
+                _limit = 100;
+                url = process.env.MARVEL_BASE_API_URL +
+                    endpoint +
+                    "?apiKey=" +
+                    process.env.MARVEL_API_SECRET +
+                    "&limit=" +
+                    _limit;
+                return [4 /*yield*/, axios_1.default.get(url)];
+            case 1:
+                response = _a.sent();
+                if (!(0, Characters_1.isCharacters)(response.data)) {
+                    throw new Error("Unexpected response from marvel's API");
+                }
+                count = response.data.count;
+                nbRequest = Math.ceil((count - 100) / _limit);
+                arrayOfPromises = [];
+                for (i = 1; i <= nbRequest; i++) {
+                    skip_1 = 100 * i;
+                    newUrl = url + "&skip=" + skip_1;
+                    promiseResponse = axios_1.default.get(newUrl);
+                    arrayOfPromises.push(promiseResponse);
+                }
+                return [4 /*yield*/, Promise.all(arrayOfPromises)];
+            case 2:
+                responseList = _a.sent();
+                responseList.push(response);
+                characterList = responseList.flatMap(function (response) { return response.data.results; });
+                isNameValidFunction = (0, argumentValidation_1.default)({
+                    argumentName: "name",
+                    argumentType: ArgumentValidation_1.EArgumentType.STRING,
+                    parameterType: ArgumentValidation_1.EParameterType.QUERY,
+                    isMiddleware: false,
+                });
+                isNameValid = isNameValidFunction(req, res, next);
+                isLimitValidFunction = (0, argumentValidation_1.default)({
+                    argumentName: "limit",
+                    argumentType: ArgumentValidation_1.EArgumentType.NUMBER,
+                    parameterType: ArgumentValidation_1.EParameterType.QUERY,
+                    numberOption: {
+                        argumentMinValue: 1,
+                        argumentMaxValue: 100,
+                        mustBeInteger: true,
+                    },
+                    isMiddleware: false,
+                });
+                isLimitValid = isLimitValidFunction(req, res, next);
+                isSkipValidFunction = (0, argumentValidation_1.default)({
+                    argumentName: "skip",
+                    argumentType: ArgumentValidation_1.EArgumentType.NUMBER,
+                    parameterType: ArgumentValidation_1.EParameterType.QUERY,
+                    numberOption: {
+                        mustBeInteger: true,
+                    },
+                    isMiddleware: false,
+                });
+                isSkipValid = isSkipValidFunction(req, res, next);
+                comicid_1 = req.params.comicid;
+                name = req.query.name;
+                limit_1 = Number(req.query.limit);
+                skip_2 = Number(req.query.skip);
+                regex_1 = isNameValid && new RegExp(name, "i");
+                filteredCharacterList = characterList.filter(function (character) {
+                    return (character.comics.includes(comicid_1) &&
+                        (regex_1 ? regex_1.test(character.name) : true));
+                });
+                _count = filteredCharacterList.length;
+                skip_2 = isSkipValid ? skip_2 : 0;
+                limit_1 = isLimitValid ? limit_1 : 100;
+                filteredCharacterList = filteredCharacterList.filter(function (_character, index) {
+                    return index > skip_2 - 1 && index <= skip_2 - 1 + limit_1;
+                });
+                characters = {
+                    count: _count,
+                    limit: limit_1,
+                    results: filteredCharacterList,
+                };
+                res.status(200).json(characters);
+                return [3 /*break*/, 4];
+            case 3:
+                error_3 = _a.sent();
+                res.status(500).json(error_3);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
 exports.default = router;
