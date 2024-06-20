@@ -4,7 +4,7 @@ import IThumbnail from "./Thumbnail";
 interface ICharacters {
   count: number;
   limit: number;
-  result: Array<ICharacterResult>;
+  results: Array<ICharacterResult>;
 }
 
 interface ICharacterResult {
