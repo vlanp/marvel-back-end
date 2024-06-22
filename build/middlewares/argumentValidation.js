@@ -216,6 +216,7 @@ var isArgumentValid = function (argumentValidation) {
                             i--;
                         }
                     }
+                    req[parameterType][argumentName] = pictureList;
                     if (pictureList.length === 0) {
                         throw new Error_1.default({
                             status: 400,

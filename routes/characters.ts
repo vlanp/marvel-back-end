@@ -4,7 +4,7 @@ import {
   EArgumentType,
   EParameterType,
 } from "../interfaces/ArgumentValidation";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import ICharacters, { isCharacters } from "../interfaces/Characters";
 import { isAboutACharacter } from "../interfaces/AboutACharacter";
 
@@ -136,7 +136,7 @@ router.get(
       const nbRequest = Math.ceil((count - 100) / _limit);
 
       const arrayOfPromises: Array<
-        Promise<axios.AxiosResponse<ICharacters, any>>
+        Promise<axios.AxiosResponse<ICharacters, unknown>>
       > = [];
       for (let i = 1; i <= nbRequest; i++) {
         const skip = 100 * i;

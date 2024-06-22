@@ -250,6 +250,8 @@ const isArgumentValid = <NewArgType>(
             }
           }
 
+          req[parameterType]![argumentName] = pictureList;
+
           if (pictureList.length === 0) {
             throw new CArgumentValidationError({
               status: 400,
