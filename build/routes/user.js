@@ -135,7 +135,6 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
                 response = {
                     _id: newUser._id,
                     token: token,
-                    avatar: newUser.account.avatar,
                     account: newUser.account,
                 };
                 res.status(201).json(response);
@@ -155,56 +154,66 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
     });
 }); });
 router.post("/login", (0, argumentValidation_1.default)({
-    parameterType: "body",
+    parameterType: ArgumentValidation_1.EParameterType.BODY,
     argumentName: "password",
-    argumentType: "string",
+    argumentType: ArgumentValidation_1.EArgumentType.STRING,
     stringOption: {
         mustBeStrongPassword: true,
     },
 }), (0, argumentValidation_1.default)({
-    parameterType: "body",
+    parameterType: ArgumentValidation_1.EParameterType.BODY,
     argumentName: "email",
-    argumentType: "string",
+    argumentType: ArgumentValidation_1.EArgumentType.STRING,
     stringOption: {
         mustBeEmail: true,
     },
 }), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, email, password, user, token, hash, salt, _id, hashToVerify, response, error_2;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    var _a, email, password, user, _id, _b, token, hash, salt, hashToVerify, response, error_2;
+    return __generator(this, function (_c) {
+        switch (_c.label) {
             case 0:
-                _b.trys.push([0, 2, , 3]);
+                _c.trys.push([0, 2, , 3]);
                 _a = req.body, email = _a.email, password = _a.password;
                 return [4 /*yield*/, User_1.default.findOne({ email: email })];
             case 1:
-                user = _b.sent();
+                user = _c.sent();
                 if (!user) {
-                    throw {
+                    throw new Error_1.default({
                         status: 404,
-                        message: "Unable to log into account. Wrong email and/or password.",
-                    };
+                        argumentName: "email",
+                        argumentType: ArgumentValidation_1.EArgumentType.STRING,
+                        parameterType: ArgumentValidation_1.EParameterType.BODY,
+                        message: "Impossible de se connecter au compte. Mauvais mail ou mot de passe.",
+                    });
                 }
-                token = user.token, hash = user.hash, salt = user.salt, _id = user._id;
+                _id = user._id;
+                _b = user.private, token = _b.token, hash = _b.hash, salt = _b.salt;
                 hashToVerify = (0, passwordProtection_1.default)(password, salt).hash;
                 if (hashToVerify !== hash) {
-                    throw {
+                    throw new Error_1.default({
                         status: 404,
-                        message: "Unable to log into account. Wrong email and/or password.",
-                    };
+                        argumentName: "email",
+                        argumentType: ArgumentValidation_1.EArgumentType.STRING,
+                        parameterType: ArgumentValidation_1.EParameterType.BODY,
+                        message: "Impossible de se connecter au compte. Mauvais mail ou mot de passe.",
+                    });
                 }
                 response = {
                     _id: _id,
                     token: token,
-                    newsletter: user.newsletter,
                     account: user.account,
                 };
                 res.status(200).json(response);
                 return [3 /*break*/, 3];
             case 2:
-                error_2 = _b.sent();
-                res
-                    .status(error_2.status || 500)
-                    .json({ message: error_2.message || "Internal server error" });
+                error_2 = _c.sent();
+                if (error_2 instanceof Error_1.default) {
+                    res.status(error_2.status).json(error_2);
+                }
+                else {
+                    console.log(error_2);
+                    res.status(500).json(error_2);
+                }
                 return [3 /*break*/, 3];
             case 3: return [2 /*return*/];
         }
@@ -221,23 +230,30 @@ router.get("/mailcheck/:randomString", function (req, res) { return __awaiter(vo
             case 1:
                 user = _a.sent();
                 if (!user) {
-                    throw {
+                    throw new Error_1.default({
                         status: 404,
-                        message: "No user found with the randomString : " + randomString,
-                    };
+                        argumentName: "randomString",
+                        argumentType: ArgumentValidation_1.EArgumentType.STRING,
+                        parameterType: ArgumentValidation_1.EParameterType.BODY,
+                        message: "Aucun utilisateur trouvé associé à ce token de vérification d'email.",
+                    });
                 }
-                user.randomString = null;
-                user.active = true;
+                user.randomString = undefined;
+                user.isActive = true;
                 return [4 /*yield*/, user.save()];
             case 2:
                 _a.sent();
-                res.status(200).json({ message: "Email verified successfully" });
+                res.status(200).json({ message: "Email vérifié avec succès" });
                 return [3 /*break*/, 4];
             case 3:
                 error_3 = _a.sent();
-                res
-                    .status(error_3.status || 500)
-                    .json({ message: error_3.message || "Internal server error" });
+                if (error_3 instanceof Error_1.default) {
+                    res.status(error_3.status).json(error_3);
+                }
+                else {
+                    console.log(error_3);
+                    res.status(500).json(error_3);
+                }
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
         }

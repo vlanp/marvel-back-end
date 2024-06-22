@@ -109,12 +109,11 @@ router.post(
       const response = {
         _id: newUser._id,
         token: token,
-        avatar: newUser.account.avatar,
         account: newUser.account,
       };
 
       res.status(201).json(response);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof CArgumentValidationError) {
         res.status(error.status).json(error);
       } else {
@@ -128,17 +127,17 @@ router.post(
 router.post(
   "/login",
   isArgumentValid({
-    parameterType: "body",
+    parameterType: EParameterType.BODY,
     argumentName: "password",
-    argumentType: "string",
+    argumentType: EArgumentType.STRING,
     stringOption: {
       mustBeStrongPassword: true,
     },
   }),
   isArgumentValid({
-    parameterType: "body",
+    parameterType: EParameterType.BODY,
     argumentName: "email",
-    argumentType: "string",
+    argumentType: EArgumentType.STRING,
     stringOption: {
       mustBeEmail: true,
     },
@@ -150,35 +149,46 @@ router.post(
       const user = await User.findOne({ email: email });
 
       if (!user) {
-        throw {
+        throw new CArgumentValidationError({
           status: 404,
-          message: "Unable to log into account. Wrong email and/or password.",
-        };
+          argumentName: "email",
+          argumentType: EArgumentType.STRING,
+          parameterType: EParameterType.BODY,
+          message:
+            "Impossible de se connecter au compte. Mauvais mail ou mot de passe.",
+        });
       }
 
-      const { token, hash, salt, _id } = user;
+      const { _id } = user;
+      const { token, hash, salt } = user.private;
 
       const hashToVerify = hashPassword(password, salt).hash;
 
       if (hashToVerify !== hash) {
-        throw {
+        throw new CArgumentValidationError({
           status: 404,
-          message: "Unable to log into account. Wrong email and/or password.",
-        };
+          argumentName: "email",
+          argumentType: EArgumentType.STRING,
+          parameterType: EParameterType.BODY,
+          message:
+            "Impossible de se connecter au compte. Mauvais mail ou mot de passe.",
+        });
       }
 
       const response = {
         _id: _id,
         token: token,
-        newsletter: user.newsletter,
         account: user.account,
       };
 
       res.status(200).json(response);
-    } catch (error) {
-      res
-        .status(error.status || 500)
-        .json({ message: error.message || "Internal server error" });
+    } catch (error: unknown) {
+      if (error instanceof CArgumentValidationError) {
+        res.status(error.status).json(error);
+      } else {
+        console.log(error);
+        res.status(500).json(error);
+      }
     }
   }
 );
@@ -190,22 +200,29 @@ router.get("/mailcheck/:randomString", async (req, res) => {
     const user = await User.findOne({ randomString: randomString });
 
     if (!user) {
-      throw {
+      throw new CArgumentValidationError({
         status: 404,
-        message: "No user found with the randomString : " + randomString,
-      };
+        argumentName: "randomString",
+        argumentType: EArgumentType.STRING,
+        parameterType: EParameterType.BODY,
+        message:
+          "Aucun utilisateur trouvé associé à ce token de vérification d'email.",
+      });
     }
 
-    user.randomString = null;
-    user.active = true;
+    user.randomString = undefined;
+    user.isActive = true;
 
     await user.save();
 
-    res.status(200).json({ message: "Email verified successfully" });
-  } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Internal server error" });
+    res.status(200).json({ message: "Email vérifié avec succès" });
+  } catch (error: unknown) {
+    if (error instanceof CArgumentValidationError) {
+      res.status(error.status).json(error);
+    } else {
+      console.log(error);
+      res.status(500).json(error);
+    }
   }
 });
 
