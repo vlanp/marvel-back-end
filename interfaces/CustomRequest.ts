@@ -1,18 +1,12 @@
 import { Request } from "express";
+import { IUser } from "../models/User";
+import { Document, Types } from "mongoose";
 
 interface CustomRequest extends Request {
-  user?: {
-    account: {
-      email: string;
-      username: string;
-      avatar?: {
-        secure_url: string;
-        public_id: string;
-      };
+  user?: Document<unknown, object, IUser> &
+    IUser & {
+      _id: Types.ObjectId;
     };
-    isActive: boolean;
-    _id: string;
-  };
 }
 
 export default CustomRequest;

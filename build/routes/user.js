@@ -276,9 +276,7 @@ router.get("/account", authentification_1.isAuthentificated, function (req, res)
                 });
             }
             res.status(200).json({
-                username: user.account.username,
-                avatar: user.account.avatar,
-                email: user.account.email,
+                account: user.account,
                 active: user.isActive,
             });
         }
@@ -296,11 +294,10 @@ router.get("/account", authentification_1.isAuthentificated, function (req, res)
 }); });
 router.patch("/account", authentification_1.isAuthentificated, (0, express_fileupload_1.default)(), function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
     var user, isUsernameValidFunction, isUsernameValid, isAvatarValidFunction, isAvatarValid, avatar, username, folder, arrayOfPromises, deletePromise, responseList, error_4;
-    var _a;
-    return __generator(this, function (_b) {
-        switch (_b.label) {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                _b.trys.push([0, 4, , 5]);
+                _a.trys.push([0, 4, , 5]);
                 user = req.user;
                 if (!user) {
                     throw new Error_1.default({
@@ -347,28 +344,29 @@ router.patch("/account", authentification_1.isAuthentificated, (0, express_fileu
                 }
                 return [4 /*yield*/, Promise.all(arrayOfPromises)];
             case 1:
-                responseList = _b.sent();
+                responseList = _a.sent();
                 user.account.avatar = {
                     secure_url: responseList[0].secure_url,
                     public_id: responseList[0].public_id,
                 };
-                _b.label = 2;
+                _a.label = 2;
             case 2: return [4 /*yield*/, user.save()];
             case 3:
-                _b.sent();
+                _a.sent();
                 res.status(200).json({
-                    username: user.account.username,
-                    avatar: (_a = user.account.avatar) === null || _a === void 0 ? void 0 : _a.secure_url,
-                    email: user.email,
-                    active: user.active,
-                    newsletter: user.newsletter,
+                    account: user.account,
+                    isActive: user.isActive,
                 });
                 return [3 /*break*/, 5];
             case 4:
-                error_4 = _b.sent();
-                res
-                    .status(error_4.status || 500)
-                    .json({ message: error_4.message || "Internal server error" });
+                error_4 = _a.sent();
+                if (error_4 instanceof Error_1.default) {
+                    res.status(error_4.status).json(error_4);
+                }
+                else {
+                    console.log(error_4);
+                    res.status(500).json(error_4);
+                }
                 return [3 /*break*/, 5];
             case 5: return [2 /*return*/];
         }

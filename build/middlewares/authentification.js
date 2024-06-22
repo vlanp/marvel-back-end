@@ -69,7 +69,7 @@ var isAuthentificated = function (req, res, next) { return __awaiter(void 0, voi
                 token = req.headers.authorization.replace("Bearer ", "");
                 return [4 /*yield*/, User_1.default.findOne({
                         token: token,
-                    }).select("account isActive")];
+                    })];
             case 1:
                 user = _a.sent();
                 if (!user) {
@@ -79,11 +79,7 @@ var isAuthentificated = function (req, res, next) { return __awaiter(void 0, voi
                         message: "Aucun utilisateur ne correspond au token d'accès transmis. Accès non autorisé",
                     });
                 }
-                req.user = {
-                    account: user.account,
-                    isActive: user.isActive,
-                    _id: user.id,
-                };
+                req.user = user;
                 return [2 /*return*/, next()];
             case 2:
                 error_1 = _a.sent();

@@ -31,7 +31,7 @@ const isAuthentificated = async (
     const token = req.headers.authorization.replace("Bearer ", "");
     const user = await User.findOne({
       token: token,
-    }).select("account isActive");
+    });
 
     if (!user) {
       throw new CArgumentValidationError({
@@ -42,11 +42,7 @@ const isAuthentificated = async (
       });
     }
 
-    req.user = {
-      account: user.account,
-      isActive: user.isActive,
-      _id: user.id,
-    };
+    req.user = user;
 
     return next();
   } catch (error: unknown) {

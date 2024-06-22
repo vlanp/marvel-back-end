@@ -13,7 +13,6 @@ import {
 import CArgumentValidationError from "../classes/Error";
 import { isAuthentificated } from "../middlewares/authentification";
 import CustomRequest from "../interfaces/CustomRequest";
-import axios, { AxiosResponse } from "axios";
 import { UploadApiResponse } from "cloudinary";
 
 const router = express.Router();
@@ -247,9 +246,7 @@ router.get("/account", isAuthentificated, async (req: CustomRequest, res) => {
     }
 
     res.status(200).json({
-      username: user.account.username,
-      avatar: user.account.avatar,
-      email: user.account.email,
+      account: user.account,
       active: user.isActive,
     });
   } catch (error: unknown) {
@@ -337,16 +334,16 @@ router.patch(
       await user.save();
 
       res.status(200).json({
-        username: user.account.username,
-        avatar: user.account.avatar?.secure_url,
-        email: user.email,
-        active: user.active,
-        newsletter: user.newsletter,
+        account: user.account,
+        isActive: user.isActive,
       });
-    } catch (error) {
-      res
-        .status(error.status || 500)
-        .json({ message: error.message || "Internal server error" });
+    } catch (error: unknown) {
+      if (error instanceof CArgumentValidationError) {
+        res.status(error.status).json(error);
+      } else {
+        console.log(error);
+        res.status(500).json(error);
+      }
     }
   }
 );
