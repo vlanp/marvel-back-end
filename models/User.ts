@@ -5,7 +5,10 @@ interface IUser {
   account: {
     email: string;
     username: string;
-    avatar: string;
+    avatar: {
+      secure_url: string;
+      public_id: string;
+    };
   };
   private: {
     token: string;
@@ -21,7 +24,10 @@ const userSchema = new Schema<IUser>({
   account: {
     email: { type: String, required: true },
     username: { type: String, required: true },
-    avatar: String,
+    avatar: {
+      secure_url: String,
+      public_id: String,
+    },
   },
   private: {
     token: { type: String, required: true },

@@ -6,7 +6,10 @@ var userSchema = new mongoose_1.Schema({
     account: {
         email: { type: String, required: true },
         username: { type: String, required: true },
-        avatar: String,
+        avatar: {
+            secure_url: String,
+            public_id: String,
+        },
     },
     private: {
         token: { type: String, required: true },

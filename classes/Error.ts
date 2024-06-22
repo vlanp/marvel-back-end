@@ -1,8 +1,8 @@
 class CArgumentValidationError extends Error {
   readonly status: number;
-  readonly parameterType: string;
+  readonly parameterType?: string;
   readonly argumentName: string;
-  readonly argumentType: string;
+  readonly argumentType?: string;
   constructor({
     status,
     message,
@@ -12,9 +12,9 @@ class CArgumentValidationError extends Error {
   }: {
     status: number;
     message: string;
-    parameterType: string;
+    parameterType?: string;
     argumentName: string;
-    argumentType: string;
+    argumentType?: string;
   }) {
     super(message || "Argument Validation Error " + status);
     this.status = status;

@@ -3,7 +3,7 @@ import hashPassword from "../utils/passwordProtection";
 import fileUpload, { UploadedFile } from "express-fileupload";
 import User from "../models/User";
 import uid2 from "uid2";
-import { uploadPicture } from "../utils/cloudinary";
+import { deletePicture, uploadPicture } from "../utils/cloudinary";
 import sendEmail from "../utils/email";
 import isArgumentValid from "../middlewares/argumentValidation";
 import {
@@ -11,6 +11,10 @@ import {
   EParameterType,
 } from "../interfaces/ArgumentValidation";
 import CArgumentValidationError from "../classes/Error";
+import { isAuthentificated } from "../middlewares/authentification";
+import CustomRequest from "../interfaces/CustomRequest";
+import axios, { AxiosResponse } from "axios";
+import { UploadApiResponse } from "cloudinary";
 
 const router = express.Router();
 
@@ -101,7 +105,10 @@ router.post(
       if (avatar) {
         const folder = "/marvel/user/" + newUser._id;
         const pictureDataObj = await uploadPicture(avatar, folder);
-        newUser.account.avatar = pictureDataObj.secure_url;
+        newUser.account.avatar = {
+          secure_url: pictureDataObj.secure_url,
+          public_id: pictureDataObj.public_id,
+        };
       }
 
       await newUser.save();
@@ -226,108 +233,122 @@ router.get("/mailcheck/:randomString", async (req, res) => {
   }
 });
 
-router.get("/account", async (req, res) => {
+router.get("/account", isAuthentificated, async (req: CustomRequest, res) => {
   try {
-    if (!req.headers || !req.headers.authorization) {
-      throw { status: 401, message: "Unauthorized access" };
-    }
-
-    const token = req.headers.authorization.replace("Bearer ", "");
-    const user = await User.findOne({
-      token: token,
-    });
+    const { user } = req;
 
     if (!user) {
-      throw { status: 404, message: "No user found with this token" };
+      throw new CArgumentValidationError({
+        status: 500,
+        argumentName: "user",
+        message:
+          "La clé user n'existe pas dans la requête. Utiliser le middleware isAuthentificated avant le controller.",
+      });
     }
 
     res.status(200).json({
       username: user.account.username,
-      avatar: user.account.avatar?.secure_url,
-      email: user.email,
-      active: user.active,
-      newsletter: user.newsletter,
+      avatar: user.account.avatar,
+      email: user.account.email,
+      active: user.isActive,
     });
-  } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Internal server error" });
+  } catch (error: unknown) {
+    if (error instanceof CArgumentValidationError) {
+      res.status(error.status).json(error);
+    } else {
+      console.log(error);
+      res.status(500).json(error);
+    }
   }
 });
 
-router.patch("/account", fileUpload(), async (req, res) => {
-  try {
-    if (!req.headers || !req.headers.authorization) {
-      throw { status: 401, message: "Unauthorized access" };
+router.patch(
+  "/account",
+  isAuthentificated,
+  fileUpload(),
+  async (req: CustomRequest, res, next) => {
+    try {
+      const { user } = req;
+
+      if (!user) {
+        throw new CArgumentValidationError({
+          status: 500,
+          argumentName: "user",
+          message:
+            "La clé user n'existe pas dans la requête. Utiliser le middleware isAuthentificated avant le controller.",
+        });
+      }
+
+      const isUsernameValidFunction = isArgumentValid({
+        parameterType: EParameterType.BODY,
+        argumentName: "username",
+        argumentType: EArgumentType.STRING,
+        isMiddleware: false,
+        stringOption: {
+          argumentMinLength: 2,
+        },
+      });
+      const isUsernameValid = isUsernameValidFunction(req, res, next);
+
+      const isAvatarValidFunction = isArgumentValid({
+        parameterType: EParameterType.FILES,
+        argumentName: "avatar",
+        argumentType: EArgumentType.PICTURE,
+        isMiddleware: false,
+      });
+      const isAvatarValid = isAvatarValidFunction(req, res, next);
+
+      const avatar: UploadedFile | null = !isAvatarValid
+        ? null
+        : Array.isArray(req.files)
+        ? req.files[0].picture
+        : req.files!.picture;
+
+      const { username } = req.body;
+
+      if (isUsernameValid) {
+        user.account.username = username;
+      }
+
+      if (avatar) {
+        const folder = "/vinted/user/" + user._id;
+
+        // Save
+        const arrayOfPromises: [Promise<UploadApiResponse>, Promise<void>?] = [
+          uploadPicture(avatar, folder),
+        ];
+
+        // Delete
+        if (user.account.avatar) {
+          const deletePromise = deletePicture(
+            user.account.avatar.public_id,
+            folder
+          );
+          arrayOfPromises.push(deletePromise);
+        }
+
+        const responseList = await Promise.all(arrayOfPromises);
+        user.account.avatar = {
+          secure_url: responseList[0].secure_url,
+          public_id: responseList[0].public_id,
+        };
+      }
+
+      await user.save();
+
+      res.status(200).json({
+        username: user.account.username,
+        avatar: user.account.avatar?.secure_url,
+        email: user.email,
+        active: user.active,
+        newsletter: user.newsletter,
+      });
+    } catch (error) {
+      res
+        .status(error.status || 500)
+        .json({ message: error.message || "Internal server error" });
     }
-
-    const token = req.headers.authorization.replace("Bearer ", "");
-    const user = await User.findOne({
-      token: token,
-    });
-
-    if (!user) {
-      throw { status: 404, message: "No user found with this token" };
-    }
-
-    const { newsletter, username } = req.body;
-
-    const isUsernameValidFunction = isArgumentValid({
-      parameterType: "body",
-      argumentName: "username",
-      argumentType: "string",
-      isMiddleware: false,
-      stringOption: {
-        argumentMinLength: 2,
-      },
-    });
-    const isUsernameValid = isUsernameValidFunction(req, res);
-
-    const isNewsletterValidFunction = isArgumentValid({
-      parameterType: "body",
-      argumentName: "newsletter",
-      argumentType: "boolean",
-      isMiddleware: false,
-    });
-    const isNewsletterValid = isNewsletterValidFunction(req, res);
-
-    const isPictureValidFunction = isArgumentValid({
-      parameterType: "files",
-      argumentName: "picture",
-      argumentType: "picture",
-      isMiddleware: false,
-    });
-    const isPictureValid = isPictureValidFunction(req, res);
-
-    if (isUsernameValid) {
-      user.account.username = username;
-    }
-
-    if (isNewsletterValid) {
-      user.newsletter = newsletter;
-    }
-
-    if (isPictureValid) {
-      const { picture } = req.files;
-      const folder = "/vinted/user/" + user._id;
-      const pictureDataObj = await uploadPicture(picture, folder);
-      user.account.avatar = pictureDataObj;
-    }
-
-    await user.save();
-
-    res.status(200).json({
-      username: user.account.username,
-      avatar: user.account.avatar?.secure_url,
-      email: user.email,
-      active: user.active,
-      newsletter: user.newsletter,
-    });
-  } catch (error) {
-    res
-      .status(error.status || 500)
-      .json({ message: error.message || "Internal server error" });
   }
-});
+);
 
 module.exports = router;

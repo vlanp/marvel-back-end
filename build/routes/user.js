@@ -49,6 +49,7 @@ var email_1 = __importDefault(require("../utils/email"));
 var argumentValidation_1 = __importDefault(require("../middlewares/argumentValidation"));
 var ArgumentValidation_1 = require("../interfaces/ArgumentValidation");
 var Error_1 = __importDefault(require("../classes/Error"));
+var authentification_1 = require("../middlewares/authentification");
 var router = express_1.default.Router();
 router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidation_1.default)({
     parameterType: ArgumentValidation_1.EParameterType.BODY,
@@ -127,7 +128,10 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
                 return [4 /*yield*/, (0, cloudinary_1.uploadPicture)(avatar, folder)];
             case 3:
                 pictureDataObj = _c.sent();
-                newUser.account.avatar = pictureDataObj.secure_url;
+                newUser.account.avatar = {
+                    secure_url: pictureDataObj.secure_url,
+                    public_id: pictureDataObj.public_id,
+                };
                 _c.label = 4;
             case 4: return [4 /*yield*/, newUser.save()];
             case 5:
@@ -259,25 +263,99 @@ router.get("/mailcheck/:randomString", function (req, res) { return __awaiter(vo
         }
     });
 }); });
-router.get("/account", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var token, user, error_4;
+router.get("/account", authentification_1.isAuthentificated, function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var user;
+    return __generator(this, function (_a) {
+        try {
+            user = req.user;
+            if (!user) {
+                throw new Error_1.default({
+                    status: 500,
+                    argumentName: "user",
+                    message: "La clé user n'existe pas dans la requête. Utiliser le middleware isAuthentificated avant le controller.",
+                });
+            }
+            res.status(200).json({
+                username: user.account.username,
+                avatar: user.account.avatar,
+                email: user.account.email,
+                active: user.isActive,
+            });
+        }
+        catch (error) {
+            if (error instanceof Error_1.default) {
+                res.status(error.status).json(error);
+            }
+            else {
+                console.log(error);
+                res.status(500).json(error);
+            }
+        }
+        return [2 /*return*/];
+    });
+}); });
+router.patch("/account", authentification_1.isAuthentificated, (0, express_fileupload_1.default)(), function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
+    var user, isUsernameValidFunction, isUsernameValid, isAvatarValidFunction, isAvatarValid, avatar, username, folder, arrayOfPromises, deletePromise, responseList, error_4;
     var _a;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _b.trys.push([0, 2, , 3]);
-                if (!req.headers || !req.headers.authorization) {
-                    throw { status: 401, message: "Unauthorized access" };
-                }
-                token = req.headers.authorization.replace("Bearer ", "");
-                return [4 /*yield*/, User_1.default.findOne({
-                        token: token,
-                    })];
-            case 1:
-                user = _b.sent();
+                _b.trys.push([0, 4, , 5]);
+                user = req.user;
                 if (!user) {
-                    throw { status: 404, message: "No user found with this token" };
+                    throw new Error_1.default({
+                        status: 500,
+                        argumentName: "user",
+                        message: "La clé user n'existe pas dans la requête. Utiliser le middleware isAuthentificated avant le controller.",
+                    });
                 }
+                isUsernameValidFunction = (0, argumentValidation_1.default)({
+                    parameterType: ArgumentValidation_1.EParameterType.BODY,
+                    argumentName: "username",
+                    argumentType: ArgumentValidation_1.EArgumentType.STRING,
+                    isMiddleware: false,
+                    stringOption: {
+                        argumentMinLength: 2,
+                    },
+                });
+                isUsernameValid = isUsernameValidFunction(req, res, next);
+                isAvatarValidFunction = (0, argumentValidation_1.default)({
+                    parameterType: ArgumentValidation_1.EParameterType.FILES,
+                    argumentName: "avatar",
+                    argumentType: ArgumentValidation_1.EArgumentType.PICTURE,
+                    isMiddleware: false,
+                });
+                isAvatarValid = isAvatarValidFunction(req, res, next);
+                avatar = !isAvatarValid
+                    ? null
+                    : Array.isArray(req.files)
+                        ? req.files[0].picture
+                        : req.files.picture;
+                username = req.body.username;
+                if (isUsernameValid) {
+                    user.account.username = username;
+                }
+                if (!avatar) return [3 /*break*/, 2];
+                folder = "/vinted/user/" + user._id;
+                arrayOfPromises = [
+                    (0, cloudinary_1.uploadPicture)(avatar, folder),
+                ];
+                // Delete
+                if (user.account.avatar) {
+                    deletePromise = (0, cloudinary_1.deletePicture)(user.account.avatar.public_id, folder);
+                    arrayOfPromises.push(deletePromise);
+                }
+                return [4 /*yield*/, Promise.all(arrayOfPromises)];
+            case 1:
+                responseList = _b.sent();
+                user.account.avatar = {
+                    secure_url: responseList[0].secure_url,
+                    public_id: responseList[0].public_id,
+                };
+                _b.label = 2;
+            case 2: return [4 /*yield*/, user.save()];
+            case 3:
+                _b.sent();
                 res.status(200).json({
                     username: user.account.username,
                     avatar: (_a = user.account.avatar) === null || _a === void 0 ? void 0 : _a.secure_url,
@@ -285,93 +363,14 @@ router.get("/account", function (req, res) { return __awaiter(void 0, void 0, vo
                     active: user.active,
                     newsletter: user.newsletter,
                 });
-                return [3 /*break*/, 3];
-            case 2:
+                return [3 /*break*/, 5];
+            case 4:
                 error_4 = _b.sent();
                 res
                     .status(error_4.status || 500)
                     .json({ message: error_4.message || "Internal server error" });
-                return [3 /*break*/, 3];
-            case 3: return [2 /*return*/];
-        }
-    });
-}); });
-router.patch("/account", (0, express_fileupload_1.default)(), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var token, user, _a, newsletter, username, isUsernameValidFunction, isUsernameValid, isNewsletterValidFunction, isNewsletterValid, isPictureValidFunction, isPictureValid, picture, folder, pictureDataObj, error_5;
-    var _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
-            case 0:
-                _c.trys.push([0, 5, , 6]);
-                if (!req.headers || !req.headers.authorization) {
-                    throw { status: 401, message: "Unauthorized access" };
-                }
-                token = req.headers.authorization.replace("Bearer ", "");
-                return [4 /*yield*/, User_1.default.findOne({
-                        token: token,
-                    })];
-            case 1:
-                user = _c.sent();
-                if (!user) {
-                    throw { status: 404, message: "No user found with this token" };
-                }
-                _a = req.body, newsletter = _a.newsletter, username = _a.username;
-                isUsernameValidFunction = (0, argumentValidation_1.default)({
-                    parameterType: "body",
-                    argumentName: "username",
-                    argumentType: "string",
-                    isMiddleware: false,
-                    stringOption: {
-                        argumentMinLength: 2,
-                    },
-                });
-                isUsernameValid = isUsernameValidFunction(req, res);
-                isNewsletterValidFunction = (0, argumentValidation_1.default)({
-                    parameterType: "body",
-                    argumentName: "newsletter",
-                    argumentType: "boolean",
-                    isMiddleware: false,
-                });
-                isNewsletterValid = isNewsletterValidFunction(req, res);
-                isPictureValidFunction = (0, argumentValidation_1.default)({
-                    parameterType: "files",
-                    argumentName: "picture",
-                    argumentType: "picture",
-                    isMiddleware: false,
-                });
-                isPictureValid = isPictureValidFunction(req, res);
-                if (isUsernameValid) {
-                    user.account.username = username;
-                }
-                if (isNewsletterValid) {
-                    user.newsletter = newsletter;
-                }
-                if (!isPictureValid) return [3 /*break*/, 3];
-                picture = req.files.picture;
-                folder = "/vinted/user/" + user._id;
-                return [4 /*yield*/, (0, cloudinary_1.uploadPicture)(picture, folder)];
-            case 2:
-                pictureDataObj = _c.sent();
-                user.account.avatar = pictureDataObj;
-                _c.label = 3;
-            case 3: return [4 /*yield*/, user.save()];
-            case 4:
-                _c.sent();
-                res.status(200).json({
-                    username: user.account.username,
-                    avatar: (_b = user.account.avatar) === null || _b === void 0 ? void 0 : _b.secure_url,
-                    email: user.email,
-                    active: user.active,
-                    newsletter: user.newsletter,
-                });
-                return [3 /*break*/, 6];
-            case 5:
-                error_5 = _c.sent();
-                res
-                    .status(error_5.status || 500)
-                    .json({ message: error_5.message || "Internal server error" });
-                return [3 /*break*/, 6];
-            case 6: return [2 /*return*/];
+                return [3 /*break*/, 5];
+            case 5: return [2 /*return*/];
         }
     });
 }); });
