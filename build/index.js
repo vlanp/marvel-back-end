@@ -9,11 +9,15 @@ var express_1 = __importDefault(require("express"));
 var cors_1 = __importDefault(require("cors"));
 var comics_1 = __importDefault(require("./routes/comics"));
 var characters_1 = __importDefault(require("./routes/characters"));
+var user_1 = __importDefault(require("./routes/user"));
+var mongoose_1 = __importDefault(require("mongoose"));
+mongoose_1.default.connect(process.env.MONGODB_URI);
 var app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
 app.use(comics_1.default);
 app.use(characters_1.default);
+app.use("/user", user_1.default);
 app.all("*", function (_req, res) {
     res.status(404).json({ message: "This route does not exist" });
 });

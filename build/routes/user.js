@@ -82,15 +82,18 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
                     parameterType: ArgumentValidation_1.EParameterType.FILES,
                     argumentName: "avatar",
                     argumentType: ArgumentValidation_1.EArgumentType.PICTURE,
+                    isMiddleware: false,
                 });
                 isAvatarValid = isAvatarValidFunction(req, res, next);
                 avatar = !isAvatarValid
                     ? null
                     : Array.isArray(req.files)
-                        ? req.files[0].picture
-                        : req.files.picture;
+                        ? req.files[0].avatar
+                        : req.files.avatar;
                 _a = req.body, username = _a.username, password = _a.password, email = _a.email;
-                return [4 /*yield*/, User_1.default.findOne({ email: email })];
+                return [4 /*yield*/, User_1.default.findOne({
+                        "account.email": email,
+                    })];
             case 1:
                 user = _c.sent();
                 if (user) {
@@ -105,7 +108,7 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
                 _b = (0, passwordProtection_1.default)(password), salt = _b.salt, hash = _b.hash, token = _b.token;
                 randomString = (0, uid2_1.default)(128);
                 return [4 /*yield*/, (0, email_1.default)(email, "Lien de vérification de l'email " + email, "Merci de cliquer sur le lien ci-dessous pour activer votre compte : \n" +
-                        "https://site--backend-vinted--x7c7hl9cnzx6.code.run" +
+                        process.env.THIS_BACK_END_URL +
                         "/user/mailcheck/" +
                         randomString)];
             case 2:
@@ -178,7 +181,7 @@ router.post("/login", (0, argumentValidation_1.default)({
             case 0:
                 _c.trys.push([0, 2, , 3]);
                 _a = req.body, email = _a.email, password = _a.password;
-                return [4 /*yield*/, User_1.default.findOne({ email: email })];
+                return [4 /*yield*/, User_1.default.findOne({ "account.email": email })];
             case 1:
                 user = _c.sent();
                 if (!user) {
@@ -326,8 +329,8 @@ router.patch("/account", authentification_1.isAuthentificated, (0, express_fileu
                 avatar = !isAvatarValid
                     ? null
                     : Array.isArray(req.files)
-                        ? req.files[0].picture
-                        : req.files.picture;
+                        ? req.files[0].avatar
+                        : req.files.avatar;
                 username = req.body.username;
                 if (isUsernameValid) {
                     user.account.username = username;
@@ -372,4 +375,4 @@ router.patch("/account", authentification_1.isAuthentificated, (0, express_fileu
         }
     });
 }); });
-module.exports = router;
+exports.default = router;

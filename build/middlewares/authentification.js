@@ -68,7 +68,7 @@ var isAuthentificated = function (req, res, next) { return __awaiter(void 0, voi
                 }
                 token = req.headers.authorization.replace("Bearer ", "");
                 return [4 /*yield*/, User_1.default.findOne({
-                        token: token,
+                        "private.token": token,
                     })];
             case 1:
                 user = _a.sent();

@@ -50,18 +50,21 @@ router.post(
         parameterType: EParameterType.FILES,
         argumentName: "avatar",
         argumentType: EArgumentType.PICTURE,
+        isMiddleware: false,
       });
       const isAvatarValid = isAvatarValidFunction(req, res, next);
 
       const avatar: UploadedFile | null = !isAvatarValid
         ? null
         : Array.isArray(req.files)
-        ? req.files[0].picture
-        : req.files!.picture;
+        ? req.files[0].avatar
+        : req.files!.avatar;
 
       const { username, password, email } = req.body;
 
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({
+        "account.email": email,
+      });
 
       if (user) {
         throw new CArgumentValidationError({
@@ -82,7 +85,7 @@ router.post(
         email,
         "Lien de vérification de l'email " + email,
         "Merci de cliquer sur le lien ci-dessous pour activer votre compte : \n" +
-          "https://site--backend-vinted--x7c7hl9cnzx6.code.run" +
+          process.env.THIS_BACK_END_URL +
           "/user/mailcheck/" +
           randomString
       );
@@ -152,7 +155,7 @@ router.post(
     try {
       const { email, password } = req.body;
 
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({ "account.email": email });
 
       if (!user) {
         throw new CArgumentValidationError({
@@ -298,8 +301,8 @@ router.patch(
       const avatar: UploadedFile | null = !isAvatarValid
         ? null
         : Array.isArray(req.files)
-        ? req.files[0].picture
-        : req.files!.picture;
+        ? req.files[0].avatar
+        : req.files!.avatar;
 
       const { username } = req.body;
 
@@ -348,4 +351,4 @@ router.patch(
   }
 );
 
-module.exports = router;
+export default router;

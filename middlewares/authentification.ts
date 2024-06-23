@@ -30,7 +30,7 @@ const isAuthentificated = async (
 
     const token = req.headers.authorization.replace("Bearer ", "");
     const user = await User.findOne({
-      token: token,
+      "private.token": token,
     });
 
     if (!user) {
