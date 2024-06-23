@@ -56,7 +56,7 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
     argumentName: "username",
     argumentType: ArgumentValidation_1.EArgumentType.STRING,
     stringOption: {
-        argumentMinLength: 2,
+        argumentMinLength: 1,
     },
 }), (0, argumentValidation_1.default)({
     parameterType: ArgumentValidation_1.EParameterType.BODY,
@@ -160,7 +160,7 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
         }
     });
 }); });
-router.post("/login", (0, argumentValidation_1.default)({
+router.post("/signin", (0, argumentValidation_1.default)({
     parameterType: ArgumentValidation_1.EParameterType.BODY,
     argumentName: "password",
     argumentType: ArgumentValidation_1.EArgumentType.STRING,
@@ -181,6 +181,7 @@ router.post("/login", (0, argumentValidation_1.default)({
             case 0:
                 _c.trys.push([0, 2, , 3]);
                 _a = req.body, email = _a.email, password = _a.password;
+                console.log(email, password);
                 return [4 /*yield*/, User_1.default.findOne({ "account.email": email })];
             case 1:
                 user = _c.sent();
@@ -315,7 +316,7 @@ router.patch("/account", authentification_1.isAuthentificated, (0, express_fileu
                     argumentType: ArgumentValidation_1.EArgumentType.STRING,
                     isMiddleware: false,
                     stringOption: {
-                        argumentMinLength: 2,
+                        argumentMinLength: 1,
                     },
                 });
                 isUsernameValid = isUsernameValidFunction(req, res, next);
@@ -341,7 +342,9 @@ router.patch("/account", authentification_1.isAuthentificated, (0, express_fileu
                     (0, cloudinary_1.uploadPicture)(avatar, folder),
                 ];
                 // Delete
-                if (user.account.avatar) {
+                if (user.account.avatar &&
+                    "public_id" in user.account.avatar &&
+                    user.account.avatar.public_id) {
                     deletePromise = (0, cloudinary_1.deletePicture)(user.account.avatar.public_id, folder);
                     arrayOfPromises.push(deletePromise);
                 }

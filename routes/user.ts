@@ -25,7 +25,7 @@ router.post(
     argumentName: "username",
     argumentType: EArgumentType.STRING,
     stringOption: {
-      argumentMinLength: 2,
+      argumentMinLength: 1,
     },
   }),
   isArgumentValid({
@@ -134,7 +134,7 @@ router.post(
 );
 
 router.post(
-  "/login",
+  "/signin",
   isArgumentValid({
     parameterType: EParameterType.BODY,
     argumentName: "password",
@@ -154,6 +154,8 @@ router.post(
   async (req, res) => {
     try {
       const { email, password } = req.body;
+
+      console.log(email, password);
 
       const user = await User.findOne({ "account.email": email });
 
@@ -285,7 +287,7 @@ router.patch(
         argumentType: EArgumentType.STRING,
         isMiddleware: false,
         stringOption: {
-          argumentMinLength: 2,
+          argumentMinLength: 1,
         },
       });
       const isUsernameValid = isUsernameValidFunction(req, res, next);
@@ -319,7 +321,11 @@ router.patch(
         ];
 
         // Delete
-        if (user.account.avatar) {
+        if (
+          user.account.avatar &&
+          "public_id" in user.account.avatar &&
+          user.account.avatar.public_id
+        ) {
           const deletePromise = deletePicture(
             user.account.avatar.public_id,
             folder
@@ -328,6 +334,7 @@ router.patch(
         }
 
         const responseList = await Promise.all(arrayOfPromises);
+
         user.account.avatar = {
           secure_url: responseList[0].secure_url,
           public_id: responseList[0].public_id,

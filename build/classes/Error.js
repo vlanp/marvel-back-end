@@ -19,11 +19,12 @@ var CArgumentValidationError = /** @class */ (function (_super) {
     __extends(CArgumentValidationError, _super);
     function CArgumentValidationError(_a) {
         var status = _a.status, message = _a.message, parameterType = _a.parameterType, argumentName = _a.argumentName, argumentType = _a.argumentType;
-        var _this = _super.call(this, message || "Argument Validation Error " + status) || this;
+        var _this = _super.call(this, message) || this;
         _this.status = status;
         _this.parameterType = parameterType;
         _this.argumentName = argumentName;
         _this.argumentType = argumentType;
+        Object.setPrototypeOf(_this, CArgumentValidationError.prototype);
         return _this;
     }
     return CArgumentValidationError;

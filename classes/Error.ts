@@ -1,3 +1,8 @@
+import {
+  EArgumentType,
+  EParameterType,
+} from "../interfaces/ArgumentValidation";
+
 class CArgumentValidationError extends Error {
   readonly status: number;
   readonly parameterType?: string;
@@ -12,15 +17,17 @@ class CArgumentValidationError extends Error {
   }: {
     status: number;
     message: string;
-    parameterType?: string;
+    parameterType?: EParameterType;
     argumentName: string;
-    argumentType?: string;
+    argumentType?: EArgumentType;
   }) {
-    super(message || "Argument Validation Error " + status);
+    super(message);
     this.status = status;
     this.parameterType = parameterType;
     this.argumentName = argumentName;
     this.argumentType = argumentType;
+
+    Object.setPrototypeOf(this, CArgumentValidationError.prototype);
   }
 }
 
