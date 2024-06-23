@@ -6,7 +6,9 @@ import {
 } from "../interfaces/ArgumentValidation";
 import axios from "axios";
 import { isComics } from "../interfaces/Comics";
-import { isComicsWithCharacter } from "../interfaces/ComicsWithCharacter";
+import IComicsWithCharacters, {
+  isComicsWithCharacter,
+} from "../interfaces/ComicsWithCharacter";
 import { isAboutAComic } from "../interfaces/AboutAComic";
 
 const router = express.Router();
@@ -82,6 +84,7 @@ router.get(
   async (req, res) => {
     try {
       const { characterid } = req.params;
+      const { title } = req.query;
 
       const endpoint = "/comics";
       const url =
@@ -92,13 +95,26 @@ router.get(
         "?apiKey=" +
         process.env.MARVEL_API_SECRET;
 
-      const response = await axios.get(url);
+      const response = await axios.get<IComicsWithCharacters>(url);
 
       if (!isComicsWithCharacter(response.data)) {
         throw new Error("Unexpected response from marvel's API");
       }
 
-      res.status(200).json(response.data);
+      let data = response.data;
+
+      if (typeof title === "string") {
+        const regex = new RegExp(title, "i");
+
+        data = {
+          thumbnail: data.thumbnail,
+          comics: data.comics.filter((comic) => {
+            return regex.test(comic.title);
+          }),
+        };
+      }
+
+      res.status(200).json(data);
     } catch (error: unknown) {
       res.status(500).json(error);
     }

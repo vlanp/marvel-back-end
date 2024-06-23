@@ -115,12 +115,13 @@ router.get("/comics/:characterid", (0, argumentValidation_1.default)({
         argumentMinLength: 1,
     },
 }), function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var characterid, endpoint, url, response, error_2;
+    var characterid, title, endpoint, url, response, data, regex_1, error_2;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
                 characterid = req.params.characterid;
+                title = req.query.title;
                 endpoint = "/comics";
                 url = process.env.MARVEL_BASE_API_URL +
                     endpoint +
@@ -134,7 +135,17 @@ router.get("/comics/:characterid", (0, argumentValidation_1.default)({
                 if (!(0, ComicsWithCharacter_1.isComicsWithCharacter)(response.data)) {
                     throw new Error("Unexpected response from marvel's API");
                 }
-                res.status(200).json(response.data);
+                data = response.data;
+                if (typeof title === "string") {
+                    regex_1 = new RegExp(title, "i");
+                    data = {
+                        thumbnail: data.thumbnail,
+                        comics: data.comics.filter(function (comic) {
+                            return regex_1.test(comic.title);
+                        }),
+                    };
+                }
+                res.status(200).json(data);
                 return [3 /*break*/, 3];
             case 2:
                 error_2 = _a.sent();
