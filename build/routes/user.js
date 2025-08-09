@@ -102,7 +102,7 @@ router.post("/signup", (0, express_fileupload_1.default)(), (0, argumentValidati
                         argumentName: "email",
                         argumentType: ArgumentValidation_1.EArgumentType.STRING,
                         parameterType: ArgumentValidation_1.EParameterType.BODY,
-                        message: "Email non valide. Il y a déjà un compte associé à cette email.",
+                        message: "Email non valide. Il y a déjà un compte associé à cet email.",
                     });
                 }
                 _b = (0, passwordProtection_1.default)(password), salt = _b.salt, hash = _b.hash, token = _b.token;

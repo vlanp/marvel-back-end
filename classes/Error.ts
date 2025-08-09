@@ -4,7 +4,7 @@ import {
 } from "../interfaces/ArgumentValidation";
 
 class CArgumentValidationError extends Error {
-  readonly name = "CArgumentValidationError";
+  override readonly name = "CArgumentValidationError";
   readonly status: number;
   readonly parameterType?: EParameterType;
   readonly argumentName: string;
@@ -24,9 +24,13 @@ class CArgumentValidationError extends Error {
   }) {
     super(message);
     this.status = status;
-    this.parameterType = parameterType;
+    if (parameterType) {
+      this.parameterType = parameterType;
+    }
     this.argumentName = argumentName;
-    this.argumentType = argumentType;
+    if (argumentType) {
+      this.argumentType = argumentType;
+    }
 
     Object.setPrototypeOf(this, CArgumentValidationError.prototype);
   }
