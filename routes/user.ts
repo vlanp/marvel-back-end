@@ -73,7 +73,7 @@ router.post(
           argumentType: EArgumentType.STRING,
           parameterType: EParameterType.BODY,
           message:
-            "Email non valide. Il y a déjà un compte associé à cette email.",
+            "Email non valide. Il y a déjà un compte associé à cet email.",
         });
       }
 

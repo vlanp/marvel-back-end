@@ -4,10 +4,11 @@ import {
 } from "../interfaces/ArgumentValidation";
 
 class CArgumentValidationError extends Error {
+  readonly name = "CArgumentValidationError";
   readonly status: number;
-  readonly parameterType?: string;
+  readonly parameterType?: EParameterType;
   readonly argumentName: string;
-  readonly argumentType?: string;
+  readonly argumentType?: EArgumentType;
   constructor({
     status,
     message,
@@ -28,6 +29,16 @@ class CArgumentValidationError extends Error {
     this.argumentType = argumentType;
 
     Object.setPrototypeOf(this, CArgumentValidationError.prototype);
+  }
+
+  toJSON() {
+    return {
+      message: this.message,
+      status: this.status,
+      parameterType: this.parameterType,
+      argumentName: this.argumentName,
+      argumentType: this.argumentType,
+    };
   }
 }
 
